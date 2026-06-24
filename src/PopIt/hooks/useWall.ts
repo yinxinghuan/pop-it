@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { callAigramAPI, isInAigram, type AigramResponse } from '@shared/runtime';
 import { getGameUuid } from '@shared/runtime/game-id';
+import { messagesByTarget, type GuestMessage } from '@shared/social/guestbook';
 import type { PopSave, Popper, WallBoard } from '../types';
 
 interface SaveRow {
@@ -21,12 +22,16 @@ interface Profile {
 
 export interface UseWall {
   boards: WallBoard[];
+  /** Best-effort guestbook notes left on boards, keyed by board.id, authors
+   *  stamped with their resolved profile (same read window as the wall). */
+  messagesByTarget: Map<string, GuestMessage[]>;
   loaded: boolean;
   refresh: () => void;
 }
 
 export function useWall(): UseWall {
   const [boards, setBoards] = useState<WallBoard[]>([]);
+  const [messages, setMessages] = useState<Map<string, GuestMessage[]>>(new Map());
   const [loaded, setLoaded] = useState(false);
   const [nonce, setNonce] = useState(0);
 
@@ -84,11 +89,19 @@ export function useWall(): UseWall {
         );
         const limited = all.slice(0, 36);
 
-        // 4. resolve profiles for every author + popper surfaced
+        // 3b. guestbook notes left on boards (best-effort, SAME fetch — no
+        //     second network call). A separate channel from the pressed-cell
+        //     patterns: parsed out of each blob's `messages`, keyed by board.id.
+        const msgs = messagesByTarget(rows);
+
+        // 4. resolve profiles for every author + popper + note author surfaced
         const ids = new Set<string>();
         for (const wb of limited) {
           if (wb.authorId) ids.add(wb.authorId);
           for (const p of wb.poppers) if (p.userId) ids.add(p.userId);
+        }
+        for (const list of msgs.values()) {
+          for (const m of list) if (m.fromUserId) ids.add(m.fromUserId);
         }
         const profEntries = await Promise.all(
           Array.from(ids).map(async uid => {
@@ -118,9 +131,24 @@ export function useWall(): UseWall {
           };
         });
 
-        if (!cancelled) setBoards(resolved);
+        // stamp each note's author with their resolved profile
+        const msgsWithProfiles = new Map<string, GuestMessage[]>();
+        for (const [target, list] of msgs) {
+          msgsWithProfiles.set(
+            target,
+            list.map(m => {
+              const pr = m.fromUserId ? profMap.get(m.fromUserId) : null;
+              return { ...m, userName: pr?.name, userAvatarUrl: pr?.head_url };
+            }),
+          );
+        }
+
+        if (!cancelled) {
+          setBoards(resolved);
+          setMessages(msgsWithProfiles);
+        }
       } catch {
-        if (!cancelled) setBoards([]);
+        if (!cancelled) { setBoards([]); setMessages(new Map()); }
       } finally {
         if (!cancelled) setLoaded(true);
       }
@@ -130,5 +158,5 @@ export function useWall(): UseWall {
     };
   }, [nonce]);
 
-  return { boards, loaded, refresh };
+  return { boards, messagesByTarget: messages, loaded, refresh };
 }

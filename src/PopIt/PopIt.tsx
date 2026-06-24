@@ -8,6 +8,13 @@ import { useWall } from './hooks/useWall';
 import { GhostFinger, WallIcon } from './assets/icons';
 import Wall from './components/Wall';
 import Detail from './components/Detail';
+import {
+  appendMessage,
+  newMessage,
+  threadFor,
+  guestbookNotifyConfig,
+  type GuestMessage,
+} from '@shared/social/guestbook';
 import type { PopSave, Board, PopRecord, WallBoard } from './types';
 import './PopIt.less';
 
@@ -76,7 +83,10 @@ export default function PopIt() {
   const { savedData, loaded, persist } = useGameSave<PopSave>('pop-it');
   const [myBoards, setMyBoards] = useState<Board[]>([]);
   const [myPops, setMyPops] = useState<PopRecord[]>([]);
+  const [myMessages, setMyMessages] = useState<GuestMessage[]>([]);
   const seeded = useRef(false);
+  // ping a board's author at most once per board per session
+  const notified = useRef<Set<string>>(new Set());
 
   const events = useGameEvent();
   const wall = useWall();
@@ -90,6 +100,7 @@ export default function PopIt() {
     if (savedData) {
       setMyBoards(savedData.boards || []);
       setMyPops(savedData.pops || []);
+      setMyMessages(savedData.messages || []);
     }
   }, [loaded, savedData]);
 
@@ -203,7 +214,7 @@ export default function PopIt() {
       };
       const next = [board, ...myBoards].slice(0, 20);
       setMyBoards(next);
-      persist({ boards: next, pops: myPops });
+      persist({ boards: next, pops: myPops, messages: myMessages });
       wall.refresh();
       setPressed(new Set());
       setScreen('wall');
@@ -224,7 +235,7 @@ export default function PopIt() {
     const rec: PopRecord = { boardId: wb.board.id, authorId: wb.authorId, at: Date.now() };
     const next = [rec, ...myPops].slice(0, 300);
     setMyPops(next);
-    persist({ boards: myBoards, pops: next });
+    persist({ boards: myBoards, pops: next, messages: myMessages });
 
     // notify the author — board is DOM-rendered, so OMIT the image field.
     if (wb.authorId && wb.authorId !== selfId && wb.authorId !== 'self') {
@@ -237,6 +248,35 @@ export default function PopIt() {
           },
         ],
       });
+    }
+  }
+
+  // ── leave a guestbook note on a board ──────────────────────────────────────
+  // A SEPARATE channel from the pressed-cell pattern: stored in my OWN blob's
+  // `messages` keyed by board.id, shown via best-effort wall ∪ my own (threadFor),
+  // author pinged once per board per session. Board is DOM-rendered → no refUrl.
+  function handleSendNote(board: Board, authorId: string | undefined, text: string) {
+    const msg = newMessage(board.id, authorId, text);
+    if (!msg) return;
+    const next = appendMessage({ messages: myMessages }, msg).messages!;
+    setMyMessages(next);
+    persist({ boards: myBoards, pops: myPops, messages: next });
+
+    if (
+      authorId &&
+      authorId !== selfId &&
+      authorId !== 'self' &&
+      !notified.current.has(board.id)
+    ) {
+      notified.current.add(board.id);
+      events.trigger(
+        `note:${board.id}`,
+        guestbookNotifyConfig({
+          toUserId: authorId,
+          note: text,
+          template: t('notify_note'),
+        }),
+      );
     }
   }
 
@@ -405,7 +445,14 @@ export default function PopIt() {
           selfId={selfId}
           accent={palette.bubbles[0]}
           hasPopped={myPops.some(p => p.boardId === detailWs.board.id)}
+          thread={threadFor(
+            detailWs.board.id,
+            wall.messagesByTarget,
+            myMessages,
+            selfId,
+          )}
           onPop={() => popBoard(detailWs)}
+          onSendNote={text => handleSendNote(detailWs.board, detailWs.authorId, text)}
           onBack={() => setScreen('wall')}
         />
       )}

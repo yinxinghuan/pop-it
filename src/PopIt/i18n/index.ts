@@ -26,6 +26,13 @@ const DICT: Record<Lang, Record<string, string>> = {
     pop_count_many: '{n} pops',
     poppers: 'Popped by',
     notify_pop: '{sender_name} popped your message.',
+    notes: 'Notes',
+    notes_empty: 'No notes yet — be the first.',
+    notes_open: 'Open in AlterU to leave a note.',
+    notes_placeholder: 'Leave a note…',
+    send: 'Send',
+    someone: 'someone',
+    notify_note: '{sender_name} left a note on your board.',
   },
   zh: {
     brand: 'POP · IT',
@@ -46,6 +53,13 @@ const DICT: Record<Lang, Record<string, string>> = {
     pop_count_many: '{n} 次戳',
     poppers: '戳过的人',
     notify_pop: '{sender_name} 戳爆了你的留言。',
+    notes: '留言',
+    notes_empty: '还没有留言 —— 来当第一个。',
+    notes_open: '在 AlterU 中打开即可留言。',
+    notes_placeholder: '写句留言…',
+    send: '发送',
+    someone: '某人',
+    notify_note: '{sender_name} 在你的留言板上留了言。',
   },
 };
 
