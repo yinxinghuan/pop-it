@@ -1,0 +1,486 @@
+.pi-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 24px;
+  color: #1a1320;
+  font-family: 'Inter', -apple-system, sans-serif;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.pi-hidden {
+  display: none !important;
+}
+
+/* ── studio ── */
+.pi-studio {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.pi-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 0;
+  flex: 0 0 auto;
+}
+
+.pi-top__wall,
+.pi-top__theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #2a1f31;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pi-top__wall svg {
+  opacity: 0.8;
+}
+.pi-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12) inset;
+}
+
+/* ── the tray + bubbles (shared between play tray, mini cards, detail) ── */
+.pi-stage {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  padding: 14px 18px;
+  min-height: 0;
+}
+
+.pi-board {
+  display: grid;
+  gap: 4%;
+  border-radius: 18px;
+  padding: 5.5%;
+  position: relative;
+  /* recessed inner bath */
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.12),
+    0 10px 30px rgba(0, 0, 0, 0.18);
+}
+.pi-board::before {
+  content: '';
+  position: absolute;
+  inset: 4.5%;
+  border-radius: 12px;
+  background: var(--bath);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.18);
+  z-index: 0;
+}
+
+.pi-board--play {
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 7 / 9;
+}
+.pi-board--mini {
+  width: 100%;
+  aspect-ratio: 7 / 9;
+  border-radius: 12px;
+  padding: 5%;
+  gap: 4%;
+}
+.pi-board--mini::before {
+  inset: 4%;
+  border-radius: 9px;
+}
+.pi-board--big {
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 7 / 9;
+}
+
+/* a single silicone bubble */
+.pi-bub {
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  /* convex (popped up): soft volume gradient + glossy top highlight + drop shadow */
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 38%),
+    radial-gradient(circle at 50% 62%, color-mix(in srgb, var(--c) 78%, #000 22%) 0%, var(--c) 55%, color-mix(in srgb, var(--c) 80%, #fff 20%) 100%);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.22),
+    inset 0 -2px 3px color-mix(in srgb, var(--c) 60%, #000 40%);
+  transition: transform 0.09s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+.pi-bub:active {
+  transform: scale(0.94);
+}
+
+/* pressed IN (concave): darker, inset shadow, no top gloss, slightly shrunk */
+.pi-bub--in {
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--c) 55%, #000 45%) 0%, color-mix(in srgb, var(--c) 70%, #000 30%) 70%);
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.12);
+  transform: scale(0.97);
+}
+
+/* cascade pop animation in the detail view */
+.pi-bub--pop {
+  animation: pi-cascade 0.42s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+@keyframes pi-cascade {
+  0% { transform: scale(0.97); }
+  45% { transform: scale(1.18); }
+  100% { transform: scale(0.97); }
+}
+
+/* ghost finger demo (lives inside the play tray for correct positioning) */
+.pi-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 12;
+  will-change: transform;
+}
+.pi-ghost > svg {
+  transform: translate(-22%, -16%);
+}
+.pi-ghost__label {
+  position: absolute;
+  top: 52px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(30, 30, 42, 0.92);
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.95),
+    0 0 10px rgba(255, 255, 255, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  animation: pi-pulse 2.4s ease-in-out infinite;
+}
+@keyframes pi-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* bottom brand + actions */
+.pi-bottom {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 16px 26px;
+}
+.pi-brand {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  color: rgba(30, 20, 40, 0.78);
+  text-shadow: 0 1px 6px rgba(255, 255, 255, 0.5);
+}
+.pi-actions {
+  display: flex;
+  gap: 10px;
+}
+.pi-pill {
+  height: 42px;
+  min-width: 104px;
+  padding: 0 22px;
+  border-radius: 21px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #2a1f31;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.pi-pill:active {
+  transform: scale(0.96);
+}
+.pi-pill:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pi-pill--go {
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+.pi-pill--go:disabled {
+  color: #2a1f31;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+}
+
+/* ── wall + detail overlays ── */
+.pi-wall,
+.pi-detail {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(120% 90% at 50% 0%, #221a2e 0%, #120d1a 70%);
+  border-radius: 24px;
+  color: #fff;
+}
+.pi-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 14px 10px;
+  flex: 0 0 auto;
+}
+.pi-bar__title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+}
+.pi-iconbtn {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pi-iconbtn--ghost {
+  background: transparent;
+  pointer-events: none;
+}
+
+.pi-wall__scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 14px 28px;
+}
+
+.pi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 14px;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+.pi-card {
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pi-card__frame {
+  position: relative;
+  border-radius: 14px;
+  overflow: visible;
+}
+.pi-card__pops {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  height: 22px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 11px;
+  border: 1.5px solid;
+  background: rgba(10, 8, 16, 0.66);
+  backdrop-filter: blur(6px);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  z-index: 2;
+}
+.pi-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 9px;
+}
+.pi-card__count {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}
+
+.pi-empty {
+  text-align: center;
+  padding: 64px 24px;
+  color: rgba(255, 255, 255, 0.7);
+}
+.pi-empty__title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.pi-empty__sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* identity chip */
+.pi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.pi-chip--self {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.pi-chip__av {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+  background: #3a2f4a;
+}
+.pi-chip__av--initial {
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}
+.pi-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── detail ── */
+.pi-detail__stage {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  padding: 6px 28px;
+  min-height: 0;
+}
+.pi-detail__meta {
+  flex: 0 0 auto;
+  padding: 12px 20px 0;
+}
+.pi-detail__by {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pi-detail__bylabel {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+.pi-poppers {
+  margin-top: 14px;
+}
+.pi-poppers__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 8px;
+}
+
+.pi-detail__cta {
+  flex: 0 0 auto;
+  padding: 16px 20px 26px;
+}
+.pi-pop-btn {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 26px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s;
+}
+.pi-pop-btn:active {
+  transform: scale(0.97);
+}
+.pi-popped-tag {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.pi-popped-mark {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 13px;
+}
