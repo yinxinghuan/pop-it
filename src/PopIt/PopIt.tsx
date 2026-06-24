@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGameEvent, telegramId } from '@shared/runtime';
 import { useGameSave } from '@shared/save';
 import { unlockAudio, playPopIn, playPopOut, playPost } from './utils/sounds';
-import { PALETTES } from './data/palettes';
+import { PALETTES, colorIndexFor } from './data/palettes';
 import { t } from './i18n';
 import { useWall } from './hooks/useWall';
 import { GhostFinger, WallIcon } from './assets/icons';
@@ -57,6 +57,22 @@ export default function PopIt() {
   const [screen, setScreen] = useState<'studio' | 'wall' | 'detail'>('studio');
   const [detailId, setDetailId] = useState<string | null>(null);
 
+  // pop-burst particles: a tiny expanding ring + confetti dots per real pop,
+  // anchored to the pressed cell, auto-removed (~420ms). Capped concurrent.
+  const [bursts, setBursts] = useState<{ id: number; idx: number; color: string }[]>([]);
+  const burstSeq = useRef(0);
+  const MAX_BURSTS = 8;
+  function spawnBurst(idx: number, color: string) {
+    const id = ++burstSeq.current;
+    setBursts(prev => {
+      const next = [...prev, { id, idx, color }];
+      return next.length > MAX_BURSTS ? next.slice(next.length - MAX_BURSTS) : next;
+    });
+    window.setTimeout(() => {
+      setBursts(prev => prev.filter(b => b.id !== id));
+    }, 460);
+  }
+
   const { savedData, loaded, persist } = useGameSave<PopSave>('pop-it');
   const [myBoards, setMyBoards] = useState<Board[]>([]);
   const [myPops, setMyPops] = useState<PopRecord[]>([]);
@@ -94,7 +110,9 @@ export default function PopIt() {
     const ghostTo = (idx: number) => {
       const tray = trayRef.current;
       if (!tray || !ghostRef.current) return;
-      const el = tray.children[idx] as HTMLElement | undefined;
+      // query bubbles directly — the tray also holds sheen/burst overlay nodes,
+      // so positional child index would be off.
+      const el = tray.querySelectorAll('.pi-bub')[idx] as HTMLElement | undefined;
       if (!el) return;
       const trayRect = tray.getBoundingClientRect();
       const cellRect = el.getBoundingClientRect();
@@ -153,6 +171,10 @@ export default function PopIt() {
       } else {
         next.add(idx);
         playPopIn(0.9 + (idx % 7) * 0.05);
+        const row = Math.floor(idx / COLS);
+        const col = idx % COLS;
+        const ci = colorIndexFor(palette.arrangement, row, col, COLS, ROWS);
+        spawnBurst(idx, palette.bubbles[ci % palette.bubbles.length]);
       }
       return next;
     });
@@ -273,8 +295,16 @@ export default function PopIt() {
         </header>
 
         <div className="pi-stage">
+          {/* background life — slow drifting blurred bokeh blobs, theme-tinted,
+              bounded looping @keyframes, behind the tray, no pointer events */}
+          <div className="pi-bokeh" aria-hidden>
+            <span className="pi-bokeh__b pi-bokeh__b--1" style={{ background: palette.bubbles[4] }} />
+            <span className="pi-bokeh__b pi-bokeh__b--2" style={{ background: palette.bubbles[0] }} />
+            <span className="pi-bokeh__b pi-bokeh__b--3" style={{ background: palette.bubbles[2] }} />
+          </div>
+
           <div
-            className="pi-board pi-board--play"
+            className={`pi-board pi-board--play${palette.dark ? ' pi-board--dark' : ''}`}
             ref={trayRef}
             style={{
               background: palette.tray,
@@ -282,9 +312,14 @@ export default function PopIt() {
               gridTemplateColumns: `repeat(${COLS}, 1fr)`,
             }}
           >
+            {/* idle specular sweep traveling across the tray surface, looping */}
+            <span className="pi-sheen" aria-hidden />
+
             {Array.from({ length: CELLS }, (_, idx) => {
               const row = Math.floor(idx / COLS);
-              const color = palette.bubbles[row % palette.bubbles.length];
+              const col = idx % COLS;
+              const ci = colorIndexFor(palette.arrangement, row, col, COLS, ROWS);
+              const color = palette.bubbles[ci % palette.bubbles.length];
               const on = interacted ? pressed.has(idx) : demoCells.has(idx);
               return (
                 <span
@@ -298,6 +333,26 @@ export default function PopIt() {
                 />
               );
             })}
+
+            {/* pop-burst particles, anchored into the same grid cell */}
+            {bursts.map(b => (
+              <span
+                key={b.id}
+                className="pi-burst"
+                aria-hidden
+                style={{
+                  gridColumn: (b.idx % COLS) + 1,
+                  gridRow: Math.floor(b.idx / COLS) + 1,
+                  ['--c' as any]: b.color,
+                }}
+              >
+                <span className="pi-burst__ring" />
+                <i className="pi-burst__dot pi-burst__dot--1" />
+                <i className="pi-burst__dot pi-burst__dot--2" />
+                <i className="pi-burst__dot pi-burst__dot--3" />
+                <i className="pi-burst__dot pi-burst__dot--4" />
+              </span>
+            ))}
 
             {!interacted && (
               <div className="pi-ghost" ref={ghostRef}>

@@ -66,11 +66,63 @@
 
 /* ── the tray + bubbles (shared between play tray, mini cards, detail) ── */
 .pi-stage {
+  position: relative;
   flex: 1 1 auto;
   display: grid;
   place-items: center;
   padding: 14px 18px;
   min-height: 0;
+}
+
+/* ── background life: slow drifting blurred bokeh blobs behind the tray ── */
+.pi-bokeh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.pi-bokeh__b {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(34px);
+  opacity: 0.5;
+  will-change: transform;
+}
+.pi-bokeh__b--1 {
+  width: 200px;
+  height: 200px;
+  left: -50px;
+  top: 4%;
+  animation: pi-bokeh-drift1 17s ease-in-out infinite;
+}
+.pi-bokeh__b--2 {
+  width: 240px;
+  height: 240px;
+  right: -70px;
+  top: 30%;
+  opacity: 0.42;
+  animation: pi-bokeh-drift2 21s ease-in-out infinite;
+}
+.pi-bokeh__b--3 {
+  width: 170px;
+  height: 170px;
+  left: 18%;
+  bottom: -40px;
+  opacity: 0.38;
+  animation: pi-bokeh-drift3 19s ease-in-out infinite;
+}
+@keyframes pi-bokeh-drift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 30px) scale(1.12); }
+}
+@keyframes pi-bokeh-drift2 {
+  0%, 100% { transform: translate(0, 0) scale(1.05); }
+  50% { transform: translate(-36px, -28px) scale(0.92); }
+}
+@keyframes pi-bokeh-drift3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(28px, -34px) scale(1.15); }
 }
 
 .pi-board {
@@ -79,10 +131,23 @@
   border-radius: 18px;
   padding: 5.5%;
   position: relative;
-  /* recessed inner bath */
+  z-index: 1;
+  /* physical silicone object: top bevel highlight + bottom shade + soft drop */
   box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, 0.12),
-    0 10px 30px rgba(0, 0, 0, 0.18);
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.16),
+    inset 0 2px 6px rgba(0, 0, 0, 0.1),
+    0 14px 34px rgba(0, 0, 0, 0.22);
+}
+/* glossy sheen on the tray frame so it reads as molded silicone */
+.pi-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 34%);
+  z-index: 2;
 }
 .pi-board::before {
   content: '';
@@ -90,8 +155,70 @@
   inset: 4.5%;
   border-radius: 12px;
   background: var(--bath);
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.18);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.22),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.14);
   z-index: 0;
+}
+/* dark / neon tray: deepen contrast + gentle pulsing glow on the whole tray */
+.pi-board--dark {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.6),
+    0 14px 40px rgba(0, 0, 0, 0.55);
+}
+.pi-board--play.pi-board--dark {
+  animation: pi-tray-pulse 4.6s ease-in-out infinite;
+}
+@keyframes pi-tray-pulse {
+  0%, 100% { box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.6),
+    0 14px 40px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(120, 80, 200, 0.18); }
+  50% { box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.6),
+    0 14px 44px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(140, 90, 240, 0.4); }
+}
+
+/* idle specular sweep gliding across the tray surface, looping */
+.pi-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+.pi-sheen::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 50%;
+  height: 180%;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(8deg);
+  animation: pi-sheen-sweep 7.5s ease-in-out infinite;
+}
+.pi-board--dark .pi-sheen::before {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(180, 200, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+@keyframes pi-sheen-sweep {
+  0% { left: -60%; }
+  55%, 100% { left: 160%; }
 }
 
 .pi-board--play {
@@ -116,7 +243,7 @@
   aspect-ratio: 7 / 9;
 }
 
-/* a single silicone bubble */
+/* a single silicone bubble — glossy convex dome with depth */
 .pi-bub {
   position: relative;
   z-index: 1;
@@ -125,27 +252,73 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  /* convex (popped up): soft volume gradient + glossy top highlight + drop shadow */
+  /* layered: contact AO ring, body volume, sharp specular gloss top-left */
   background:
-    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 38%),
-    radial-gradient(circle at 50% 62%, color-mix(in srgb, var(--c) 78%, #000 22%) 0%, var(--c) 55%, color-mix(in srgb, var(--c) 80%, #fff 20%) 100%);
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 9%, rgba(255, 255, 255, 0) 26%),
+    radial-gradient(circle at 62% 70%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 22%),
+    radial-gradient(circle at 50% 60%,
+      color-mix(in srgb, var(--c) 72%, #000 28%) 0%,
+      var(--c) 52%,
+      color-mix(in srgb, var(--c) 82%, #fff 18%) 100%);
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.22),
-    inset 0 -2px 3px color-mix(in srgb, var(--c) 60%, #000 40%);
-  transition: transform 0.09s ease, box-shadow 0.12s ease, background 0.12s ease;
-}
-.pi-bub:active {
-  transform: scale(0.94);
+    /* soft contact shadow / ambient occlusion beneath the bubble */
+    0 3px 6px rgba(0, 0, 0, 0.26),
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    /* subtle bright rim catching light */
+    inset 0 1px 1px rgba(255, 255, 255, 0.45),
+    /* darker bottom rim for roundness */
+    inset 0 -3px 4px color-mix(in srgb, var(--c) 58%, #000 42%);
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease, background 0.14s ease;
 }
 
-/* pressed IN (concave): darker, inset shadow, no top gloss, slightly shrunk */
-.pi-bub--in {
-  background:
-    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--c) 55%, #000 45%) 0%, color-mix(in srgb, var(--c) 70%, #000 30%) 70%);
+/* juicy squish on press */
+.pi-bub:active {
+  animation: pi-squish 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pi-squish {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.86); }
+  72% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* neon glow on each bubble (dark tray) */
+.pi-board--dark .pi-bub {
   box-shadow:
-    inset 0 3px 6px rgba(0, 0, 0, 0.5),
-    inset 0 -1px 2px rgba(255, 255, 255, 0.12);
-  transform: scale(0.97);
+    0 0 7px color-mix(in srgb, var(--c) 70%, transparent),
+    0 0 14px color-mix(in srgb, var(--c) 45%, transparent),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -3px 5px color-mix(in srgb, var(--c) 50%, #000 50%);
+  animation: pi-neon-pulse 3.4s ease-in-out infinite;
+}
+@keyframes pi-neon-pulse {
+  0%, 100% { box-shadow:
+    0 0 6px color-mix(in srgb, var(--c) 60%, transparent),
+    0 0 12px color-mix(in srgb, var(--c) 38%, transparent),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -3px 5px color-mix(in srgb, var(--c) 50%, #000 50%); }
+  50% { box-shadow:
+    0 0 10px color-mix(in srgb, var(--c) 80%, transparent),
+    0 0 20px color-mix(in srgb, var(--c) 55%, transparent),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -3px 5px color-mix(in srgb, var(--c) 50%, #000 50%); }
+}
+
+/* pressed IN (concave dimple): dark top rim, light bottom, darker fill, shrunk */
+.pi-bub--in,
+.pi-board--dark .pi-bub--in {
+  background:
+    radial-gradient(circle at 50% 64%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 40%),
+    radial-gradient(circle at 50% 42%,
+      color-mix(in srgb, var(--c) 50%, #000 50%) 0%,
+      color-mix(in srgb, var(--c) 66%, #000 34%) 72%);
+  box-shadow:
+    /* concave: dark shadow from the top rim, faint light catch at the bottom */
+    inset 0 4px 7px rgba(0, 0, 0, 0.55),
+    inset 0 1px 2px rgba(0, 0, 0, 0.5),
+    inset 0 -2px 3px rgba(255, 255, 255, 0.16);
+  transform: scale(0.93);
+  animation: none;
 }
 
 /* cascade pop animation in the detail view */
@@ -156,6 +329,79 @@
   0% { transform: scale(0.97); }
   45% { transform: scale(1.18); }
   100% { transform: scale(0.97); }
+}
+
+/* ── pop-burst: expanding ring + confetti dots, anchored to a cell ── */
+.pi-burst {
+  position: relative;
+  z-index: 4;
+  align-self: center;
+  justify-self: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: block;
+}
+.pi-burst__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--c) 88%, #fff 12%);
+  transform: translate(-50%, -50%) scale(0.4);
+  opacity: 0.9;
+  animation: pi-burst-ring 0.46s ease-out forwards;
+}
+.pi-board--dark .pi-burst__ring {
+  box-shadow: 0 0 10px var(--c);
+}
+@keyframes pi-burst-ring {
+  0% { transform: translate(-50%, -50%) scale(0.35); opacity: 0.95; }
+  100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+}
+.pi-burst__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18%;
+  height: 18%;
+  border-radius: 50%;
+  background: var(--c);
+  transform: translate(-50%, -50%);
+  opacity: 0.95;
+}
+.pi-board--dark .pi-burst__dot {
+  box-shadow: 0 0 6px var(--c);
+}
+.pi-burst__dot--1 { animation: pi-burst-d1 0.42s ease-out forwards; }
+.pi-burst__dot--2 { animation: pi-burst-d2 0.42s ease-out forwards; }
+.pi-burst__dot--3 { animation: pi-burst-d3 0.42s ease-out forwards; }
+.pi-burst__dot--4 { animation: pi-burst-d4 0.42s ease-out forwards; }
+
+/* staggered detail-cascade bursts: delay each child by the parent's --d, and
+   stay invisible until their turn so early frames don't show a full ring */
+.pi-burst--staggered .pi-burst__ring,
+.pi-burst--staggered .pi-burst__dot {
+  animation-delay: var(--d, 0ms);
+  opacity: 0;
+}
+@keyframes pi-burst-d1 {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-180%, -190%) scale(0.3); opacity: 0; }
+}
+@keyframes pi-burst-d2 {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(90%, -200%) scale(0.3); opacity: 0; }
+}
+@keyframes pi-burst-d3 {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-200%, 70%) scale(0.3); opacity: 0; }
+}
+@keyframes pi-burst-d4 {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(100%, 90%) scale(0.3); opacity: 0; }
 }
 
 /* ghost finger demo (lives inside the play tray for correct positioning) */

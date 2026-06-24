@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Board } from '../types';
-import { paletteById } from '../data/palettes';
+import { paletteById, colorIndexFor } from '../data/palettes';
 
 interface Props {
   board: Board;
@@ -19,7 +19,7 @@ export default function MiniBoard({ board, poppingSet, staggerOf, className }: P
 
   return (
     <div
-      className={`pi-board ${className || ''}`}
+      className={`pi-board ${pal.dark ? 'pi-board--dark' : ''} ${className || ''}`}
       style={{
         background: pal.tray,
         ['--bath' as any]: pal.bath,
@@ -28,7 +28,9 @@ export default function MiniBoard({ board, poppingSet, staggerOf, className }: P
     >
       {Array.from({ length: board.cols * board.rows }, (_, idx) => {
         const row = Math.floor(idx / board.cols);
-        const color = pal.bubbles[row % pal.bubbles.length];
+        const col = idx % board.cols;
+        const ci = colorIndexFor(pal.arrangement, row, col, board.cols, board.rows);
+        const color = pal.bubbles[ci % pal.bubbles.length];
         const isPressed = pressed.has(idx);
         const popping = poppingSet?.has(idx);
         const delay = popping && staggerOf ? staggerOf(idx) : 0;
@@ -40,6 +42,34 @@ export default function MiniBoard({ board, poppingSet, staggerOf, className }: P
           />
         );
       })}
+
+      {/* cascade bursts: one per popping cell, staggered to match the pop */}
+      {poppingSet &&
+        [...poppingSet].map(idx => {
+          const row = Math.floor(idx / board.cols);
+          const col = idx % board.cols;
+          const ci = colorIndexFor(pal.arrangement, row, col, board.cols, board.rows);
+          const delay = staggerOf ? staggerOf(idx) : 0;
+          return (
+            <span
+              key={`burst-${idx}`}
+              className="pi-burst pi-burst--staggered"
+              aria-hidden
+              style={{
+                gridColumn: col + 1,
+                gridRow: row + 1,
+                ['--c' as any]: pal.bubbles[ci % pal.bubbles.length],
+                ['--d' as any]: `${delay}ms`,
+              }}
+            >
+              <span className="pi-burst__ring" />
+              <i className="pi-burst__dot pi-burst__dot--1" />
+              <i className="pi-burst__dot pi-burst__dot--2" />
+              <i className="pi-burst__dot pi-burst__dot--3" />
+              <i className="pi-burst__dot pi-burst__dot--4" />
+            </span>
+          );
+        })}
     </div>
   );
 }
