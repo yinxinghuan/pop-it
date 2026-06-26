@@ -589,12 +589,14 @@
   justify-content: space-between;
   gap: 6px;
   margin-top: 9px;
+  min-width: 0; // long-username truncation
 }
 .pi-card__count {
   font-size: 10px;
   letter-spacing: 0.04em;
   color: rgba(255, 255, 255, 0.5);
   white-space: nowrap;
+  flex-shrink: 0; // long-username truncation
 }
 
 .pi-empty {
@@ -618,6 +620,7 @@
   align-items: center;
   gap: 6px;
   max-width: 100%;
+  min-width: 0; // long-username truncation
   padding: 0;
   border: none;
   background: none;
@@ -650,6 +653,7 @@
   color: rgba(255, 255, 255, 0.85);
 }
 .pi-chip__name {
+  min-width: 0; // long-username truncation
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -813,12 +817,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0; // long-username truncation
 }
 .pi-detail__bylabel {
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0; // long-username truncation
 }
 .pi-poppers {
   margin-top: 14px;
