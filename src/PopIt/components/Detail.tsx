@@ -7,6 +7,8 @@ import AuthorChip from './AuthorChip';
 import MiniBoard from './MiniBoard';
 import { BackIcon } from '../assets/icons';
 
+const ALTERU_APP_URL = 'https://apps.apple.com/app/id6769646546';
+
 interface Props {
   ws: WallBoard;
   selfId: string;
@@ -115,7 +117,12 @@ export default function Detail({ ws, selfId, accent, hasPopped, thread, onPop, o
           {isInAigram ? (
             <Compose onSend={onSendNote} accent={accent} />
           ) : (
-            <div className="pi-notes__empty">{t('notes_open')}</div>
+            <div className="pi-notes__empty pi-notes__download">
+              <span>{t('notes_open')}</span>
+              <a href={ALTERU_APP_URL} target="_blank" rel="noopener noreferrer">
+                {t('download_alteru')}
+              </a>
+            </div>
           )}
         </div>
       </div>
