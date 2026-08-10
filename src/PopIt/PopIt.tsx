@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useGameEvent, telegramId } from '@shared/runtime';
+import { useGameEvent, getTelegramId } from '@shared/runtime';
 import { useGameSave } from '@shared/save';
 import { unlockAudio, playPopIn, playPopOut, playPost } from './utils/sounds';
 import { PALETTES, colorIndexFor } from './data/palettes';
@@ -91,7 +91,7 @@ export default function PopIt() {
   const events = useGameEvent();
   const wall = useWall();
 
-  const selfId = telegramId ? String(telegramId) : 'self';
+  const selfId = getTelegramId()! ? String(getTelegramId()!) : 'self';
 
   // ── seed local mirror once (useGameSave-mirror rule) ───────────────────────
   useEffect(() => {

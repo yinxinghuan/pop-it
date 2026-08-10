@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { openAigramProfile, isInAigram } from '@shared/runtime';
+import { openAigramProfile, isInAigramNow } from '@shared/runtime';
 import { timeAgo, type GuestMessage } from '@shared/social/guestbook';
 import type { WallBoard } from '../types';
 import { t, popCount } from '../i18n';
@@ -114,7 +114,7 @@ export default function Detail({ ws, selfId, accent, hasPopped, thread, onPop, o
           ) : (
             <div className="pi-notes__empty">{t('notes_empty')}</div>
           )}
-          {isInAigram ? (
+          {isInAigramNow() ? (
             <Compose onSend={onSendNote} accent={accent} />
           ) : (
             <div className="pi-notes__empty pi-notes__download">
@@ -149,7 +149,7 @@ function NoteRow({ msg, selfId, accent }: { msg: GuestMessage; selfId?: string; 
   const mine = !!msg.fromUserId && msg.fromUserId === selfId;
   const name = mine ? t('you') : (msg.userName || t('someone'));
   const initial = (msg.userName || '?').trim().charAt(0).toUpperCase();
-  const tappable = !mine && !!msg.fromUserId && isInAigram;
+  const tappable = !mine && !!msg.fromUserId && isInAigramNow();
   const head = (
     <span className="pi-note__head">
       {msg.userAvatarUrl ? (

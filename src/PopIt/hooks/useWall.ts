@@ -5,7 +5,7 @@
 // profile-resolve pattern.
 
 import { useCallback, useEffect, useState } from 'react';
-import { callAigramAPI, isInAigram, type AigramResponse } from '@shared/runtime';
+import { callAigramAPI, isInAigramNow, type AigramResponse } from '@shared/runtime';
 import { getGameUuid } from '@shared/runtime/game-id';
 import { messagesByTarget, type GuestMessage } from '@shared/social/guestbook';
 import type { PopSave, Popper, WallBoard } from '../types';
@@ -40,7 +40,7 @@ export function useWall(): UseWall {
   useEffect(() => {
     let cancelled = false;
     const sessionId = getGameUuid();
-    if (!isInAigram || !sessionId) {
+    if (!isInAigramNow() || !sessionId) {
       setLoaded(true);
       return;
     }
